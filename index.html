@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rugby Field Dot Tracker</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+      background-color: #4CAF50; /* green field base */
+    }
+    #controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+    #controls button, #playButton {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    #increaseDots {
+      background-color: #4CAF50;
+      color: white;
+    }
+    #decreaseDots {
+      background-color: #f44336;
+      color: white;
+    }
+    #playButton {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      padding: 15px 30px;
+      font-size: 20px;
+      background-color: #2196F3;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="field"></canvas>
+
+  <!-- Play/Reset button -->
+  <button id="playButton">Play</button>
+
+  <script>
+    const canvas = document.getElementById('field');
+    const ctx = canvas.getContext('2d');
+    const playButton = document.getElementById('playButton');
+    const increaseButton = document.getElementById('increaseDots');
+    const decreaseButton = document.getElementById('decreaseDots');
+
+    // Resize canvas to fill window.
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // We allow up to 15 dots total (adjust if you want more).
+    const maxDots = 15;
+
+    // This array will hold the dot objects (players).
+    let dots = [];
+
+    // Trails: each dot has an array of {x, y} positions.
+    let trails = {};
+    // Whether we are currently recording dot movement.
+    let isRecording = false;
+
+    /**
+     * Returns an array of dot objects positioned similarly to your reference image.
+     * You can tweak these coordinates to get them exactly where you want.
+     *
+     * This layout includes players #1-14, with specific colors:
+     *  - 1,2,3 => yellow
+     *  - 4,5,8 => red
+     *  - 6,7   => blue
+     *  - 9-14  => white
+     */
+    function getInitialPositions() {
+      // approximate positions on the field
+      // (x,y) measured from top-left corner of canvas
+     const adjustY = (offset) => [
+			{ number: 1, x: 166, y: offset + 10 },  // Just below halfway
+			{ number: 2, x: 214, y: offset + 12 },
+			{ number: 3, x: 265, y: offset + 14 },
+
+			// behind them (scrum flankers & #8):
+			{ number: 6, x: 147, y: offset + 62 },
+			{ number: 4, x: 191, y: offset + 50 },
+			{ number: 5, x: 244, y: offset + 56 },
+			{ number: 8, x: 213, y: offset + 94 },
+			{ number: 7, x: 296, y: offset + 76 },
+
+			// scrum-half
+			{ number: 9, x: 260, y: offset + 115 },
+
+			// backs
+			{ number: 10, x: 465, y: offset + 150 },
+			{ number: 11, x: 72, y: offset + 180 },  
+			{ number: 12, x: 638, y: offset + 189 },
+			{ number: 13, x: 809, y: offset + 215 },
+			{ number: 14, x: 1144, y: offset + 222 },
+			{ number: 15, x: 1027, y: offset + 223 },
+		];
+
+		// Get screen midpoint and adjust positions
+		const screenMidY = window.innerHeight / 2;
+		const positions = adjustY(screenMidY);
+
+
+      // Convert each position into a "dot" object with color info.
+      return positions.map(pos => ({
+        id: pos.number,
+        x: pos.x,
+        y: pos.y,
+        radius: 20,
+        number: pos.number,
+        isDragging: false,
+        offsetX: 0,
+        offsetY: 0,
+        fillColor: getDotColor(pos.number),
+        textColor: getTextColor(pos.number)
+      }));
+    }
+
+    // Assign circle colors based on player number.
+    function getDotColor(num) {
+      // 1-3 => yellow
+      if (num >= 1 && num <= 3) return 'yellow';
+      // 4,5,8 => red
+      if ([4, 5, 8].includes(num)) return 'red';
+      // 6,7 => blue
+      if ([6, 7].includes(num)) return 'blue';
+      // 9-14 => white
+      if (num >= 9 && num <= 15) return 'white';
+      // fallback color (if needed)
+      return 'black';
+    }
+
+    // Assign text color to ensure contrast.
+    function getTextColor(num) {
+      const fill = getDotColor(num);
+      // White fill => black text
+      if (fill === 'white' || fill === 'yellow') return 'black';
+      // Otherwise, use white text
+      return 'white';
+    }
+
+    // Initialize the dots with the custom formation.
+    dots = getInitialPositions();
+
+    // Draw the rugby field background with lines/crosses like the reference.
+    function drawField() {
+      // The green background is already set by CSS.
+
+      // We'll draw a few lines and crosses to mimic the reference:
+      // - horizontal mid line
+      // - short lines to form "plus" shapes near top/bottom edges
+      // - some vertical lines if desired
+
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 3;
+
+      // Full horizontal mid line
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height / 2);
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+
+      // Let's draw "plus" shapes in each corner
+      // Each plus is formed by two small lines crossing
+      const plusSize = 30; // half the length of each line
+      const offset = 60;   // distance from corner
+
+      // Top-left plus
+      drawPlus(offset, offset, plusSize);
+
+      // Top-right plus
+      drawPlus(canvas.width - offset, offset, plusSize);
+
+      // Bottom-left plus
+      drawPlus(offset, canvas.height - offset, plusSize);
+
+      // Bottom-right plus
+      drawPlus(canvas.width - offset, canvas.height - offset, plusSize);
+
+      // Optionally, add more lines to mimic the reference (dashed lines, etc.)
+      // For simplicity, we've just drawn the mid line & corner pluses here.
+    }
+
+    // Helper to draw a plus shape at (cx, cy) with half-length p
+    function drawPlus(cx, cy, p) {
+      ctx.beginPath();
+      // Horizontal segment
+      ctx.moveTo(cx - p, cy);
+      ctx.lineTo(cx + p, cy);
+      // Vertical segment
+      ctx.moveTo(cx, cy - p);
+      ctx.lineTo(cx, cy + p);
+      ctx.stroke();
+    }
+
+    // Draw dots and any trails if "Play" mode is active.
+    function drawDots() {
+      dots.forEach(dot => {
+        // Draw the trail if in "Play" mode
+        if (isRecording && trails[dot.id] && trails[dot.id].length > 0) {
+          ctx.strokeStyle = 'rgba(255,255,0,0.8)'; // for visibility
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          const points = trails[dot.id];
+          ctx.moveTo(points[0].x, points[0].y);
+          for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+          }
+          ctx.stroke();
+        }
+
+        // Draw the dot
+        ctx.fillStyle = dot.fillColor;
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw the player number
+        ctx.fillStyle = dot.textColor;
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(dot.number, dot.x, dot.y);
+      });
+    }
+
+    // Redraw the entire scene each frame.
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawField();
+      drawDots();
+      requestAnimationFrame(draw);
+    }
+    draw();
+
+    // Mouse interaction for dragging dots.
+    let draggingDot = null;
+
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Check if clicking on a dot.
+      dots.forEach(dot => {
+        const dx = mouseX - dot.x;
+        const dy = mouseY - dot.y;
+        if (Math.sqrt(dx * dx + dy * dy) < dot.radius) {
+          draggingDot = dot;
+          dot.isDragging = true;
+          dot.offsetX = dx;
+          dot.offsetY = dy;
+
+          // If in play mode, begin a new segment of the trail.
+          if (isRecording) {
+            if (!trails[dot.id]) trails[dot.id] = [];
+            trails[dot.id].push({ x: dot.x, y: dot.y });
+          }
+        }
+      });
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (draggingDot && draggingDot.isDragging) {
+        const rect = canvas.getBoundingClientRect();
+        draggingDot.x = e.clientX - rect.left - draggingDot.offsetX;
+        draggingDot.y = e.clientY - rect.top - draggingDot.offsetY;
+
+        // Record the trail if in play mode.
+        if (isRecording) {
+          trails[draggingDot.id].push({ x: draggingDot.x, y: draggingDot.y });
+        }
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      if (draggingDot) {
+        draggingDot.isDragging = false;
+        draggingDot = null;
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (draggingDot) {
+        draggingDot.isDragging = false;
+        draggingDot = null;
+      }
+    });
+
+
+    // Toggle "Play" (recording) / "Reset" (clear trails) button.
+    playButton.addEventListener('click', () => {
+      if (!isRecording) {
+        // Start recording.
+        isRecording = true;
+        // Initialize or reset each dot’s trail with its current position.
+        dots.forEach(dot => {
+          trails[dot.id] = [{ x: dot.x, y: dot.y }];
+        });
+        playButton.textContent = "Reset";
+        playButton.style.backgroundColor = "#f44336"; // red
+      } else {
+        // Reset: clear trails and stop recording.
+        trails = {};
+        isRecording = false;
+        playButton.textContent = "Play";
+        playButton.style.backgroundColor = "#2196F3";
+      }
+    });
+  </script>
+</body>
+</html>
