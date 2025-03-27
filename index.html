@@ -1,331 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Rugby Field Dot Tracker</title>
+  <meta charset="UTF-8" />
+  <title>Rugby Formation</title>
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
+      height: 100%; width: 100%;
       overflow: hidden;
+      font-family: sans-serif;
+      box-sizing: border-box;
+    }
+    #app {
+      position: relative;
+      width: 100%;
       height: 100%;
     }
-    canvas {
-      display: block;
-      background-color: #4CAF50; /* green field base */
-    }
-    #controls {
+
+    /* Rugby field background */
+    #fieldCanvas {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #228B22; /* green background */
+      display: block;
     }
-    #controls button, #playButton {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-right: 10px;
+    /* Dots container */
+    #dotsContainer {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
     }
-    #increaseDots {
-      background-color: #4CAF50;
-      color: white;
+
+    .dot {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: grab;
+      pointer-events: auto;
+      user-select: none;
+      touch-action: none;
     }
-    #decreaseDots {
-      background-color: #f44336;
-      color: white;
-    }
-    #playButton {
+
+    /* Controls in bottom-right */
+    #controls {
       position: absolute;
       bottom: 20px;
       right: 20px;
-      padding: 15px 30px;
-      font-size: 20px;
-      background-color: #2196F3;
-      color: white;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #playButton {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #positionSelect {
+      font-size: 16px;
+      padding: 6px;
+      cursor: pointer;
+    }
+
+    /* Dot color assignments */
+    .yellow { background-color: gold; }
+    .red    { background-color: red; }
+    .blue   { background-color: blue; }
+    .white  { background-color: #ccc; }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      .dot {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+      }
+      #playButton {
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+      #positionSelect {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 <body>
-  <canvas id="field"></canvas>
+<div id="app">
+  <canvas id="fieldCanvas"></canvas>
+  <div id="dotsContainer"></div>
 
-  <!-- Play/Reset button -->
-  <button id="playButton">Play</button>
+  <!-- Controls at bottom-right -->
+  <div id="controls">
+    <button id="playButton">Play</button>
+    <select id="positionSelect">
+      <option>Kick off</option>
+      <option>Scrum</option>
+      <option>Left Maul</option>
+      <option>Right Maul</option>
+    </select>
+  </div>
+</div>
 
-  <script>
-    const canvas = document.getElementById('field');
-    const ctx = canvas.getContext('2d');
-    const playButton = document.getElementById('playButton');
-    const increaseButton = document.getElementById('increaseDots');
-    const decreaseButton = document.getElementById('decreaseDots');
+<script>
+  // -- Canvas Setup & Drawing Field Lines --
+  const fieldCanvas = document.getElementById('fieldCanvas');
+  const ctx = fieldCanvas.getContext('2d');
 
-    // Resize canvas to fill window.
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+  function resizeCanvas() {
+    fieldCanvas.width = fieldCanvas.offsetWidth;
+    fieldCanvas.height = fieldCanvas.offsetHeight;
+    drawFieldLines();
+  }
+
+  // Draw a single white horizontal line through the center of the field
+  function drawFieldLines() {
+    const w = fieldCanvas.width;
+    const h = fieldCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, h/2);
+    ctx.lineTo(w, h/2);
+    ctx.stroke();
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('DOMContentLoaded', resizeCanvas);
+
+  // -- Dot Setup --
+  const dotsContainer = document.getElementById('dotsContainer');
+  const playButton = document.getElementById('playButton');
+  const positionSelect = document.getElementById('positionSelect');
+
+  let isPlaying = false;
+
+  // Formation positions (percentages for responsiveness)
+  const formations = {
+    "Kick off": [
+      { label: '1',  color: 'yellow', x: 40,  y: 50 },
+      { label: '2',  color: 'yellow', x: 42,  y: 50 },
+      { label: '3',  color: 'yellow', x: 44,  y: 50 },
+      { label: '4',  color: 'red',    x: 46,  y: 48 },
+      { label: '5',  color: 'red',    x: 48,  y: 48 },
+      { label: '6',  color: 'blue',   x: 46,  y: 52 },
+      { label: '7',  color: 'blue',   x: 48,  y: 52 },
+      { label: '8',  color: 'red',    x: 50,  y: 50 },
+      { label: '9',  color: 'white',  x: 52,  y: 48 },
+      { label: '10', color: 'white',  x: 54,  y: 48 },
+      { label: '11', color: 'white',  x: 52,  y: 52 },
+      { label: '12', color: 'white',  x: 54,  y: 52 },
+      { label: '13', color: 'white',  x: 56,  y: 50 },
+      { label: '14', color: 'white',  x: 58,  y: 50 },
+      { label: '15', color: 'white',  x: 60,  y: 50 },
+    ],
+    "Scrum": [
+      { label: '1',  color: 'yellow', x: 30,  y: 50 },
+      { label: '2',  color: 'yellow', x: 32,  y: 50 },
+      { label: '3',  color: 'yellow', x: 34,  y: 50 },
+      { label: '4',  color: 'red',    x: 36,  y: 48 },
+      { label: '5',  color: 'red',    x: 38,  y: 48 },
+      { label: '6',  color: 'blue',   x: 36,  y: 52 },
+      { label: '7',  color: 'blue',   x: 38,  y: 52 },
+      { label: '8',  color: 'red',    x: 40,  y: 50 },
+      { label: '9',  color: 'white',  x: 42,  y: 48 },
+      { label: '10', color: 'white',  x: 44,  y: 48 },
+      { label: '11', color: 'white',  x: 42,  y: 52 },
+      { label: '12', color: 'white',  x: 44,  y: 52 },
+      { label: '13', color: 'white',  x: 46,  y: 50 },
+      { label: '14', color: 'white',  x: 48,  y: 50 },
+      { label: '15', color: 'white',  x: 50,  y: 50 },
+    ],
+    "Left Maul": [
+      { label: '1', color: 'yellow', x: 20, y: 40 },
+      { label: '2', color: 'yellow', x: 22, y: 42 },
+      { label: '3', color: 'yellow', x: 24, y: 44 },
+      { label: '4', color: 'red',    x: 26, y: 46 },
+      { label: '5', color: 'red',    x: 28, y: 48 },
+      { label: '6', color: 'blue',   x: 30, y: 44 },
+      { label: '7', color: 'blue',   x: 32, y: 46 },
+      { label: '8', color: 'red',    x: 34, y: 45 },
+      { label: '9', color: 'white',  x: 36, y: 44 },
+      { label: '10',color: 'white',  x: 38, y: 46 },
+      { label: '11',color: 'white',  x: 36, y: 48 },
+      { label: '12',color: 'white',  x: 38, y: 50 },
+      { label: '13',color: 'white',  x: 40, y: 46 },
+      { label: '14',color: 'white',  x: 42, y: 48 },
+      { label: '15',color: 'white',  x: 44, y: 50 },
+    ],
+    "Right Maul": [
+      { label: '1', color: 'yellow', x: 60, y: 40 },
+      { label: '2', color: 'yellow', x: 62, y: 42 },
+      { label: '3', color: 'yellow', x: 64, y: 44 },
+      { label: '4', color: 'red',    x: 66, y: 46 },
+      { label: '5', color: 'red',    x: 68, y: 48 },
+      { label: '6', color: 'blue',   x: 70, y: 44 },
+      { label: '7', color: 'blue',   x: 72, y: 46 },
+      { label: '8', color: 'red',    x: 74, y: 45 },
+      { label: '9', color: 'white',  x: 76, y: 44 },
+      { label: '10',color: 'white',  x: 78, y: 46 },
+      { label: '11',color: 'white',  x: 76, y: 48 },
+      { label: '12',color: 'white',  x: 78, y: 50 },
+      { label: '13',color: 'white',  x: 80, y: 46 },
+      { label: '14',color: 'white',  x: 82, y: 48 },
+      { label: '15',color: 'white',  x: 84, y: 50 },
+    ]
+  };
+
+  let dots = [];
+  let currentFormation = "Kick off";
+  let lineCanvas, lineCtx;
+
+  // Create a canvas for drawing dot movement lines
+  function createLineCanvas() {
+    lineCanvas = document.createElement('canvas');
+    lineCanvas.style.position = 'absolute';
+    lineCanvas.style.top = '0';
+    lineCanvas.style.left = '0';
+    lineCanvas.width = fieldCanvas.width;
+    lineCanvas.height = fieldCanvas.height;
+    dotsContainer.appendChild(lineCanvas);
+    lineCtx = lineCanvas.getContext('2d');
+  }
+
+  function resizeLineCanvas() {
+    if (lineCanvas) {
+      lineCanvas.width = fieldCanvas.width;
+      lineCanvas.height = fieldCanvas.height;
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+  }
+  window.addEventListener('resize', resizeLineCanvas);
 
-    // We allow up to 15 dots total (adjust if you want more).
-    const maxDots = 15;
+  // Initialize dots based on the selected formation
+  function initDots(formationName) {
+    dotsContainer.innerHTML = '';
+    createLineCanvas();
+    dots = [];
+    const formation = formations[formationName];
 
-    // This array will hold the dot objects (players).
-    let dots = [];
-
-    // Trails: each dot has an array of {x, y} positions.
-    let trails = {};
-    // Whether we are currently recording dot movement.
-    let isRecording = false;
-
-    /**
-     * Returns an array of dot objects positioned similarly to your reference image.
-     * You can tweak these coordinates to get them exactly where you want.
-     *
-     * This layout includes players #1-14, with specific colors:
-     *  - 1,2,3 => yellow
-     *  - 4,5,8 => red
-     *  - 6,7   => blue
-     *  - 9-14  => white
-     */
-    function getInitialPositions() {
-      // approximate positions on the field
-      // (x,y) measured from top-left corner of canvas
-     const adjustY = (offset) => [
-			{ number: 1, x: 166, y: offset + 10 },  // Just below halfway
-			{ number: 2, x: 214, y: offset + 12 },
-			{ number: 3, x: 265, y: offset + 14 },
-
-			// behind them (scrum flankers & #8):
-			{ number: 6, x: 147, y: offset + 62 },
-			{ number: 4, x: 191, y: offset + 50 },
-			{ number: 5, x: 244, y: offset + 56 },
-			{ number: 8, x: 213, y: offset + 94 },
-			{ number: 7, x: 296, y: offset + 76 },
-
-			// scrum-half
-			{ number: 9, x: 260, y: offset + 115 },
-
-			// backs
-			{ number: 10, x: 465, y: offset + 150 },
-			{ number: 11, x: 72, y: offset + 180 },  
-			{ number: 12, x: 638, y: offset + 189 },
-			{ number: 13, x: 809, y: offset + 215 },
-			{ number: 14, x: 1144, y: offset + 222 },
-			{ number: 15, x: 1027, y: offset + 223 },
-		];
-
-		// Get screen midpoint and adjust positions
-		const screenMidY = window.innerHeight / 2;
-		const positions = adjustY(screenMidY);
-
-
-      // Convert each position into a "dot" object with color info.
-      return positions.map(pos => ({
-        id: pos.number,
-        x: pos.x,
-        y: pos.y,
-        radius: 20,
-        number: pos.number,
-        isDragging: false,
-        offsetX: 0,
-        offsetY: 0,
-        fillColor: getDotColor(pos.number),
-        textColor: getTextColor(pos.number)
-      }));
-    }
-
-    // Assign circle colors based on player number.
-    function getDotColor(num) {
-      // 1-3 => yellow
-      if (num >= 1 && num <= 3) return 'yellow';
-      // 4,5,8 => red
-      if ([4, 5, 8].includes(num)) return 'red';
-      // 6,7 => blue
-      if ([6, 7].includes(num)) return 'blue';
-      // 9-14 => white
-      if (num >= 9 && num <= 15) return 'white';
-      // fallback color (if needed)
-      return 'black';
-    }
-
-    // Assign text color to ensure contrast.
-    function getTextColor(num) {
-      const fill = getDotColor(num);
-      // White fill => black text
-      if (fill === 'white' || fill === 'yellow') return 'black';
-      // Otherwise, use white text
-      return 'white';
-    }
-
-    // Initialize the dots with the custom formation.
-    dots = getInitialPositions();
-
-    // Draw the rugby field background with lines/crosses like the reference.
-    function drawField() {
-      // The green background is already set by CSS.
-
-      // We'll draw a few lines and crosses to mimic the reference:
-      // - horizontal mid line
-      // - short lines to form "plus" shapes near top/bottom edges
-      // - some vertical lines if desired
-
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 3;
-
-      // Full horizontal mid line
-      ctx.beginPath();
-      ctx.moveTo(0, canvas.height / 2);
-      ctx.lineTo(canvas.width, canvas.height / 2);
-      ctx.stroke();
-
-      // Let's draw "plus" shapes in each corner
-      // Each plus is formed by two small lines crossing
-      const plusSize = 30; // half the length of each line
-      const offset = 60;   // distance from corner
-
-      // Top-left plus
-      drawPlus(offset, offset, plusSize);
-
-      // Top-right plus
-      drawPlus(canvas.width - offset, offset, plusSize);
-
-      // Bottom-left plus
-      drawPlus(offset, canvas.height - offset, plusSize);
-
-      // Bottom-right plus
-      drawPlus(canvas.width - offset, canvas.height - offset, plusSize);
-
-      // Optionally, add more lines to mimic the reference (dashed lines, etc.)
-      // For simplicity, we've just drawn the mid line & corner pluses here.
-    }
-
-    // Helper to draw a plus shape at (cx, cy) with half-length p
-    function drawPlus(cx, cy, p) {
-      ctx.beginPath();
-      // Horizontal segment
-      ctx.moveTo(cx - p, cy);
-      ctx.lineTo(cx + p, cy);
-      // Vertical segment
-      ctx.moveTo(cx, cy - p);
-      ctx.lineTo(cx, cy + p);
-      ctx.stroke();
-    }
-
-    // Draw dots and any trails if "Play" mode is active.
-    function drawDots() {
-      dots.forEach(dot => {
-        // Draw the trail if in "Play" mode
-        if (isRecording && trails[dot.id] && trails[dot.id].length > 0) {
-          ctx.strokeStyle = 'rgba(255,255,0,0.8)'; // for visibility
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          const points = trails[dot.id];
-          ctx.moveTo(points[0].x, points[0].y);
-          for (let i = 1; i < points.length; i++) {
-            ctx.lineTo(points[i].x, points[i].y);
-          }
-          ctx.stroke();
-        }
-
-        // Draw the dot
-        ctx.fillStyle = dot.fillColor;
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Draw the player number
-        ctx.fillStyle = dot.textColor;
-        ctx.font = '16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(dot.number, dot.x, dot.y);
-      });
-    }
-
-    // Redraw the entire scene each frame.
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawField();
-      drawDots();
-      requestAnimationFrame(draw);
-    }
-    draw();
-
-    // Mouse interaction for dragging dots.
-    let draggingDot = null;
-
-    canvas.addEventListener('mousedown', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      // Check if clicking on a dot.
-      dots.forEach(dot => {
-        const dx = mouseX - dot.x;
-        const dy = mouseY - dot.y;
-        if (Math.sqrt(dx * dx + dy * dy) < dot.radius) {
-          draggingDot = dot;
-          dot.isDragging = true;
-          dot.offsetX = dx;
-          dot.offsetY = dy;
-
-          // If in play mode, begin a new segment of the trail.
-          if (isRecording) {
-            if (!trails[dot.id]) trails[dot.id] = [];
-            trails[dot.id].push({ x: dot.x, y: dot.y });
-          }
-        }
-      });
+    formation.forEach(player => {
+      const dot = document.createElement('div');
+      dot.classList.add('dot', player.color);
+      dot.textContent = player.label;
+      dot.dataset.label = player.label;
+      dot.dataset.color = player.color;
+      dot.dataset.xPercent = player.x;
+      dot.dataset.yPercent = player.y;
+      positionDot(dot, player.x, player.y);
+      makeDraggable(dot);
+      dotsContainer.appendChild(dot);
+      dots.push(dot);
     });
+  }
 
-    canvas.addEventListener('mousemove', (e) => {
-      if (draggingDot && draggingDot.isDragging) {
-        const rect = canvas.getBoundingClientRect();
-        draggingDot.x = e.clientX - rect.left - draggingDot.offsetX;
-        draggingDot.y = e.clientY - rect.top - draggingDot.offsetY;
+  // Position a dot based on percentages
+  function positionDot(dot, xPercent, yPercent) {
+    const rect = dotsContainer.getBoundingClientRect();
+    const leftPx = (xPercent / 100) * rect.width;
+    const topPx  = (yPercent / 100) * rect.height;
+    dot.style.left = (leftPx - dot.offsetWidth / 2) + 'px';
+    dot.style.top  = (topPx - dot.offsetHeight / 2) + 'px';
+  }
 
-        // Record the trail if in play mode.
-        if (isRecording) {
-          trails[draggingDot.id].push({ x: draggingDot.x, y: draggingDot.y });
-        }
+  function repositionDots() {
+    dots.forEach(dot => {
+      const x = parseFloat(dot.dataset.xPercent);
+      const y = parseFloat(dot.dataset.yPercent);
+      positionDot(dot, x, y);
+    });
+  }
+  window.addEventListener('resize', repositionDots);
+
+  // Make dots draggable (supports mouse and touch)
+  function makeDraggable(dot) {
+    let offsetX, offsetY, isDragging = false, lastX, lastY;
+    function onPointerDown(e) {
+      isDragging = true;
+      dot.style.cursor = 'grabbing';
+      const rect = dot.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      lastX = rect.left + rect.width / 2;
+      lastY = rect.top + rect.height / 2;
+      e.preventDefault();
+    }
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      const parentRect = dotsContainer.getBoundingClientRect();
+      let newX = e.clientX - parentRect.left - offsetX;
+      let newY = e.clientY - parentRect.top - offsetY;
+      dot.style.left = newX + 'px';
+      dot.style.top  = newY + 'px';
+      if (isPlaying && lineCtx) {
+        lineCtx.strokeStyle = 'white';
+        lineCtx.lineWidth = 2;
+        lineCtx.beginPath();
+        lineCtx.moveTo(lastX, lastY);
+        lineCtx.lineTo(parentRect.left + newX + dot.offsetWidth / 2,
+                       parentRect.top  + newY + dot.offsetHeight / 2);
+        lineCtx.stroke();
+        lastX = parentRect.left + newX + dot.offsetWidth / 2;
+        lastY = parentRect.top + newY + dot.offsetHeight / 2;
       }
-    });
+    }
+    function onPointerUp(e) {
+      isDragging = false;
+      dot.style.cursor = 'grab';
+      const rect = dot.getBoundingClientRect();
+      const parentRect = dotsContainer.getBoundingClientRect();
+      const centerX = (rect.left + rect.width / 2) - parentRect.left;
+      const centerY = (rect.top + rect.height / 2) - parentRect.top;
+      dot.dataset.xPercent = (centerX / parentRect.width) * 100;
+      dot.dataset.yPercent = (centerY / parentRect.height) * 100;
+    }
+    dot.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  }
 
-    canvas.addEventListener('mouseup', () => {
-      if (draggingDot) {
-        draggingDot.isDragging = false;
-        draggingDot = null;
-      }
-    });
+  // Initialize default formation
+  initDots(currentFormation);
 
-    canvas.addEventListener('mouseleave', () => {
-      if (draggingDot) {
-        draggingDot.isDragging = false;
-        draggingDot = null;
-      }
-    });
+  // Play/Reset button handling
+  playButton.addEventListener('click', () => {
+    if (!isPlaying) {
+      isPlaying = true;
+      playButton.textContent = 'Reset';
+      playButton.style.backgroundColor = 'red';
+    } else {
+      isPlaying = false;
+      playButton.textContent = 'Play';
+      playButton.style.backgroundColor = '';
+      initDots(currentFormation);
+    }
+  });
 
-
-    // Toggle "Play" (recording) / "Reset" (clear trails) button.
-    playButton.addEventListener('click', () => {
-      if (!isRecording) {
-        // Start recording.
-        isRecording = true;
-        // Initialize or reset each dot’s trail with its current position.
-        dots.forEach(dot => {
-          trails[dot.id] = [{ x: dot.x, y: dot.y }];
-        });
-        playButton.textContent = "Reset";
-        playButton.style.backgroundColor = "#f44336"; // red
-      } else {
-        // Reset: clear trails and stop recording.
-        trails = {};
-        isRecording = false;
-        playButton.textContent = "Play";
-        playButton.style.backgroundColor = "#2196F3";
-      }
-    });
-  </script>
+  // Formation change handling
+  positionSelect.addEventListener('change', (e) => {
+    currentFormation = e.target.value;
+    initDots(currentFormation);
+    isPlaying = false;
+    playButton.textContent = 'Play';
+    playButton.style.backgroundColor = '';
+  });
+</script>
 </body>
 </html>
