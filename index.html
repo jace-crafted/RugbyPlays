@@ -152,78 +152,61 @@
 
   // Formation positions (percentages for responsiveness)
   const formations = {
-    "Kick off": [
-      { label: '1',  color: 'yellow', x: 40,  y: 50 },
-      { label: '2',  color: 'yellow', x: 42,  y: 50 },
-      { label: '3',  color: 'yellow', x: 44,  y: 50 },
-      { label: '4',  color: 'red',    x: 46,  y: 48 },
-      { label: '5',  color: 'red',    x: 48,  y: 48 },
-      { label: '6',  color: 'blue',   x: 46,  y: 52 },
-      { label: '7',  color: 'blue',   x: 48,  y: 52 },
-      { label: '8',  color: 'red',    x: 50,  y: 50 },
-      { label: '9',  color: 'white',  x: 52,  y: 48 },
-      { label: '10', color: 'white',  x: 54,  y: 48 },
-      { label: '11', color: 'white',  x: 52,  y: 52 },
-      { label: '12', color: 'white',  x: 54,  y: 52 },
-      { label: '13', color: 'white',  x: 56,  y: 50 },
-      { label: '14', color: 'white',  x: 58,  y: 50 },
-      { label: '15', color: 'white',  x: 60,  y: 50 },
+    "Receive Kick off": [
+      { label: '1', color: 'yellow',   x: 88.20337620578779, y: 68.48813913428522 },
+	  { label: '2', color: 'yellow',   x: 27.289323714768386, y: 74.30748188076956 },
+	  { label: '3', color: 'yellow',   x: 26.394192122186492, y: 55.33241091630654 },
+	  { label: '4', color: 'red', 	    x: 89.38153135048232, y: 62.88521335242076 },
+	  { label: '5', color: 'red', 	    x: 38.32646704180064, y: 54.43862419575141 },
+	  { label: '6', color: 'blue',     x: 91.79310691318328, y: 81.84729955261527 },
+	  { label: '7', color: 'blue',     x: 19.891312038016856, y: 64.81128883232287 },
+	  { label: '8', color: 'red', 	    x: 37.32499493663334, y: 79.43213339867138 },
+	  { label: '9', color: 'white',    x: 55.83132532248543, y: 78.53834667811626 },
+	  { label: '10',color: 'white',   x: 45.28989147909968, y: 82.00095470986501 },
+	  { label: '11',color: 'white',   x: 8.670786646018074, y: 56.22186726869985 },
+	  { label: '12',color: 'white',   x: 68.38826366559485, y: 80.18524972624529 },
+	  { label: '13',color: 'white',   x: 68.1378968658938, y: 56.024930620591206 },
+	  { label: '14',color: 'white',   x: 94.94992958387762, y: 55.05540049850589 },
+	  { label: '15',color: 'white',   x: 52.148648473610834, y: 53.39335067213591 }
     ],
-    "Scrum": [
-      { label: '1',  color: 'yellow', x: 30,  y: 50 },
-      { label: '2',  color: 'yellow', x: 32,  y: 50 },
-      { label: '3',  color: 'yellow', x: 34,  y: 50 },
-      { label: '4',  color: 'red',    x: 36,  y: 48 },
-      { label: '5',  color: 'red',    x: 38,  y: 48 },
-      { label: '6',  color: 'blue',   x: 36,  y: 52 },
-      { label: '7',  color: 'blue',   x: 38,  y: 52 },
-      { label: '8',  color: 'red',    x: 40,  y: 50 },
-      { label: '9',  color: 'white',  x: 42,  y: 48 },
-      { label: '10', color: 'white',  x: 44,  y: 48 },
-      { label: '11', color: 'white',  x: 42,  y: 52 },
-      { label: '12', color: 'white',  x: 44,  y: 52 },
-      { label: '13', color: 'white',  x: 46,  y: 50 },
-      { label: '14', color: 'white',  x: 48,  y: 50 },
-      { label: '15', color: 'white',  x: 50,  y: 50 },
+    "Left Scrum": [
+		{ label: '1',  color: 'yellow',  x: 12.266378617363344, y: 44.74305725097656 },
+		{ label: '2',  color: 'yellow',  x: 15.606579059956541, y: 44.75 },
+		{ label: '3',  color: 'yellow',  x: 18.945940514469452, y: 44.9513905843099 },
+		{ label: '4',  color: 'red', 	  x: 13.068562841875378, y: 50.493057250976555 },
+		{ label: '5',  color: 'red',   x: 17.31896477113583, y: 50.29166666666667 },
+		{ label: '6',  color: 'blue',    x: 20.464061234158333, y: 50.31250000000001 },
+		{ label: '7',  color: 'blue',    x: 9.548331993569132, y: 50.416666666666664 },
+		{ label: '8',  color: 'red',   x: 15.192089510117313, y: 55.55555725097656 },
+		{ label: '9',  color: 'white',   x: 17.834774397577117, y: 59.972223917643234 },
+		{ label: '10', color: 'white',  x: 28.56963424437299, y: 68.125 },
+		{ label: '11', color: 'white',  x: 85.78845450349176, y: 77.02083333333334 },
+		{ label: '12', color: 'white',  x: 43.415062220533564, y: 72.8402811686198 },
+		{ label: '13', color: 'white',  x: 60.95676238130526, y: 76.14583333333333 },
+		{ label: '14', color: 'white',  x: 4.060322985388458, y: 67.68055725097656 },
+		{ label: '15', color: 'white',  x: 34.946076126343954, y: 83.2777811686198 }
     ],
-    "Left Maul": [
-      { label: '1', color: 'yellow', x: 20, y: 40 },
-      { label: '2', color: 'yellow', x: 22, y: 42 },
-      { label: '3', color: 'yellow', x: 24, y: 44 },
-      { label: '4', color: 'red',    x: 26, y: 46 },
-      { label: '5', color: 'red',    x: 28, y: 48 },
-      { label: '6', color: 'blue',   x: 30, y: 44 },
-      { label: '7', color: 'blue',   x: 32, y: 46 },
-      { label: '8', color: 'red',    x: 34, y: 45 },
-      { label: '9', color: 'white',  x: 36, y: 44 },
-      { label: '10',color: 'white',  x: 38, y: 46 },
-      { label: '11',color: 'white',  x: 36, y: 48 },
-      { label: '12',color: 'white',  x: 38, y: 50 },
-      { label: '13',color: 'white',  x: 40, y: 46 },
-      { label: '14',color: 'white',  x: 42, y: 48 },
-      { label: '15',color: 'white',  x: 44, y: 50 },
+	"Right Scrum": [
+      { label: '1',  color: 'yellow', x: 77.59328271798383, y: 44.25634498041967 },
+	  { label: '2',  color: 'yellow', x: 81.46938802345007, y: 44.13542785014047 },
+	  { label: '3',  color: 'yellow', x: 85.0767080423533, y: 44.377264878314584 },
+	  { label: '4',  color: 'red', 	 x: 79.62804959901277, y: 50.961680035726594 },
+	  { label: '5',  color: 'red', 	 x: 83.39613641573301, y: 51.20351983151641 },
+	  { label: '6',  color: 'blue',  x: 75.44798529033109, y: 50.96734811269643 },
+	  { label: '7',  color: 'blue',  x: 87.14747781538887, y: 50.971128675753455 },
+	  { label: '8',  color: 'red', 	 x: 81.21650916587119, y: 56.59008046676613 },
+	  { label: '9',  color: 'white', x: 77.96422829581994, y: 61.844387817797006 },
+	  { label: '10', color: 'white', x: 66.67336712312851, y: 62.69082433544565 },
+	  { label: '11', color: 'white', x: 24.21288934934561, y: 68.50437825734531 },
+	  { label: '12', color: 'white', x: 55.687299035369776, y: 64.03037801423794 },
+	  { label: '13', color: 'white', x: 41.824927130696096, y: 66.26360034035031 },
+	  { label: '14', color: 'white', x: 93.07425643086816, y: 60.58040665352529 },
+	  { label: '15', color: 'white', x: 61.902130225080384, y: 79.2019325485556 }
     ],
-    "Right Maul": [
-      { label: '1', color: 'yellow', x: 60, y: 40 },
-      { label: '2', color: 'yellow', x: 62, y: 42 },
-      { label: '3', color: 'yellow', x: 64, y: 44 },
-      { label: '4', color: 'red',    x: 66, y: 46 },
-      { label: '5', color: 'red',    x: 68, y: 48 },
-      { label: '6', color: 'blue',   x: 70, y: 44 },
-      { label: '7', color: 'blue',   x: 72, y: 46 },
-      { label: '8', color: 'red',    x: 74, y: 45 },
-      { label: '9', color: 'white',  x: 76, y: 44 },
-      { label: '10',color: 'white',  x: 78, y: 46 },
-      { label: '11',color: 'white',  x: 76, y: 48 },
-      { label: '12',color: 'white',  x: 78, y: 50 },
-      { label: '13',color: 'white',  x: 80, y: 46 },
-      { label: '14',color: 'white',  x: 82, y: 48 },
-      { label: '15',color: 'white',  x: 84, y: 50 },
-    ]
   };
 
   let dots = [];
-  let currentFormation = "Kick off";
+  let currentFormation = "Receive Kick off";
   let lineCanvas, lineCtx;
 
   // Create a canvas for drawing dot movement lines
@@ -338,6 +321,9 @@
 
   // Play/Reset button handling
   playButton.addEventListener('click', () => {
+	dots.forEach(dot => {
+		console.log(dot.dataset.label+" x - "+dot.dataset.xPercent+" y - "+dot.dataset.yPercent);
+	});
     if (!isPlaying) {
       isPlaying = true;
       playButton.textContent = 'Reset';
