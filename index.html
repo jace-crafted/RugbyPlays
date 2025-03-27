@@ -108,10 +108,9 @@
   <div id="controls">
     <button id="playButton">Play</button>
     <select id="positionSelect">
-      <option>Kick off</option>
-      <option>Scrum</option>
-      <option>Left Maul</option>
-      <option>Right Maul</option>
+      <option>Receive Kick off</option>
+      <option>Left Scrum</option>
+      <option>Right Scrum</option>
     </select>
   </div>
 </div>
@@ -321,9 +320,6 @@
 
   // Play/Reset button handling
   playButton.addEventListener('click', () => {
-	dots.forEach(dot => {
-		console.log(dot.dataset.label+" x - "+dot.dataset.xPercent+" y - "+dot.dataset.yPercent);
-	});
     if (!isPlaying) {
       isPlaying = true;
       playButton.textContent = 'Reset';
